@@ -1,6 +1,6 @@
 open WhileLib.Ast
-open WhileLib.Types
-open WhileLib.Prettyprint       
+(* open WhileLib.Types
+open WhileLib.Prettyprint    *)    
 open WhileLib.Main
 
 (**********************************************************************
@@ -25,7 +25,7 @@ let%test "test_parse4" = test_parse
 let%test "test_parse5" = test_parse
     "x:=3; while x<=0 do x:=x-1; y:=0" (Seq(Seq(Assign("x",Const(3)),While(Leq(Var "x",Const 0),Assign("x",Sub(Var "x",Const 1)))),Assign("y",Const(0))))
 
-
+    
 (**********************************************************************
  trace test : (command, n_steps, variable, expected value after n_steps)
  **********************************************************************)
