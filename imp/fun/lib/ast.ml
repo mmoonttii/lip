@@ -19,7 +19,7 @@ type expr =
               
 and cmd =
   | Skip
-  | Assign of string * expr
+  | Assign of ide * expr
   | Seq of cmd * cmd
   | If of expr * cmd * cmd
   | While of expr * cmd

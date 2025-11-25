@@ -1,11 +1,10 @@
 open Ast
 open Types
     
-let apply st x =
+let apply ( st : state ) ( x : ide ) =
   match topenv st x with
   | IVar l
   | BVar l -> getmem st l
-
 
 let parse (s : string) : cmd =
   let lexbuf = Lexing.from_string s in
@@ -64,7 +63,7 @@ let bottom_mem = fun x -> raise (UnboundLoc x)
 
 let bind f x v = fun y -> if y = x then v else f y
 
-let rec eval_decl (e,l) = function
+let rec eval_decl (e,l : env * loc) = function
   | EmptyDecl -> (e,l)
   | IntVar (x,d) -> let e' = bind e x (IVar l) in eval_decl (e', l+1) d
   | BoolVar (x,d) -> let e' = bind e x (BVar l) in eval_decl (e', l+1) d
@@ -76,8 +75,8 @@ let rec trace1 = function
     | Skip -> St st
     | Assign (x, e) -> (
       match (eval_expr st e, topenv st x) with
-      | (Bool b, BVar l) -> St (getenv st, bind (getmem st) l (Bool b), getloc st)
-      | (Int v, IVar l)  -> St (getenv st, bind (getmem st) l (Int v),  getloc st)
+      | (Bool b, BVar l) -> St (getenv st, bind (getmem st) l (Bool b), (getloc st) + 1)
+      | (Int v, IVar l)  -> St (getenv st, bind (getmem st) l (Int v),  (getloc st) + 1)
       | _ -> raise (TypeError "Assign")
     )
     | Seq(c1, c2) -> (
@@ -100,8 +99,9 @@ let rec trace1 = function
     | Decl(d, c) -> 
       let (e, l) = eval_decl (topenv st, getloc st) d in
       let st' = (e :: (getenv st), getmem st, l) in
-      Cmd(Block(c), st')
-    | Block(c) -> (match trace1 (Cmd(c, st)) with
+        Cmd(Block(c), st')
+    | Block(c) -> (
+      match trace1 (Cmd(c, st)) with
       | St st -> St (popenv st, getmem st, getloc st)
       | Cmd(c', st') -> Cmd(Block(c'), st')
     )
@@ -112,7 +112,7 @@ let rec trace1 = function
 
  Usage: trace_rec n t performs n steps of the small-step semantics
 
- **********************************************************************)
+**********************************************************************)
 
 let rec trace_rec n t =
   if n<=0 then [t]
@@ -121,11 +121,10 @@ let rec trace_rec n t =
       in t::(trace_rec (n-1) t')
     with NoRuleApplies -> [t]
 
-
 (**********************************************************************
  trace : int -> cmd -> conf list
 
  Usage: trace n c performs n steps of the small-step semantics
- **********************************************************************)
+**********************************************************************)
 
 let trace n c = trace_rec n (Cmd(c,([bottom_env], bottom_mem, 0)))
